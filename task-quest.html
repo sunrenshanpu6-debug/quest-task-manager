@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Quest Task Manager v4 Mobile Voice</title>
+<style>
+:root{
+  --bg:#0b1020;--card:#171f35;--card2:#111827;--line:#334155;
+  --gold:#facc15;--red:#ef4444;--green:#22c55e;--blue:#38bdf8;--purple:#a855f7;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",sans-serif;background:radial-gradient(circle at top,#1e293b,#020617);color:white}
+.app{max-width:1100px;margin:auto;padding:14px;padding-bottom:90px}
+h1{text-align:center;color:var(--gold);font-size:28px}
+h2{margin:8px 0 12px}
+.card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:18px;padding:14px;margin:12px 0;box-shadow:0 8px 20px #0008}
+input,textarea,select,button{width:100%;padding:12px;margin:6px 0;border-radius:12px;border:none;font-size:16px}
+input,textarea,select{background:#263244;color:white;border:1px solid #475569}
+button{background:var(--gold);color:#111827;font-weight:800;cursor:pointer}
+button:active{transform:scale(.98)}
+.danger{background:var(--red);color:white}
+.goodBtn{background:var(--green);color:#052e16}
+.blueBtn{background:var(--blue);color:#082f49}
+.purpleBtn{background:var(--purple);color:white}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}.app{padding:10px;padding-bottom:86px}h1{font-size:23px}}
+.expbar{height:20px;background:#334155;border-radius:999px;overflow:hidden;border:1px solid #475569}
+.exp{height:100%;background:linear-gradient(90deg,#f59e0b,#facc15);transition:.25s}
+.badge{display:inline-block;background:#4c1d95;padding:5px 9px;border-radius:999px;margin:3px;font-size:13px}
+.quest{background:#0f172a;border:1px solid #475569;border-radius:14px;padding:12px;margin:10px 0}
+.done{text-decoration:line-through;color:#94a3b8}
+.warn{color:#fb7185;font-weight:bold}.today{color:#4ade80;font-weight:bold}
+.tabs{position:fixed;bottom:0;left:0;right:0;background:#020617;border-top:1px solid #334155;display:grid;grid-template-columns:repeat(5,1fr);z-index:10}
+.tabs button{border-radius:0;margin:0;padding:10px 4px;background:#0f172a;color:white;font-size:12px;border-right:1px solid #1e293b}
+.tabs button.active{background:#facc15;color:#111827}
+.page{display:none}.page.active{display:block}
+.charGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.char{background:#0f172a;border:1px solid #475569;border-radius:14px;padding:10px;text-align:center;position:relative;overflow:hidden}
+.char .face{font-size:34px}
+.char .name{font-weight:800;font-size:13px;min-height:35px}
+.char .rare{font-size:12px;margin-top:4px}
+.char.locked{filter:grayscale(1);opacity:.45}
+.N{border-color:#94a3b8}.R{border-color:#38bdf8}.SR{border-color:#a78bfa}.SSR{border-color:#facc15;box-shadow:0 0 14px #facc1544}.SECRET{border-color:#fb7185;box-shadow:0 0 18px #fb718577}
+.modal{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;z-index:20;padding:12px}
+.modal.show{display:flex}
+.modalBox{background:#111827;border:2px solid #facc15;border-radius:20px;max-width:900px;width:100%;max-height:90vh;overflow:auto;padding:16px;text-align:center}
+.gachaResult{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-top:10px}
+.bigNum{font-size:28px;color:#facc15;font-weight:900}
+.small{font-size:13px;color:#cbd5e1}
+
+.voiceHelp{background:#052e16;border:1px solid #22c55e;border-radius:14px;padding:10px;margin:8px 0;color:#dcfce7}
+.voiceInput{font-size:18px;min-height:52px}
+.quickRow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.quickRow button{font-size:14px}
+@media(max-width:760px){
+  input,textarea,select,button{font-size:18px;padding:14px}
+  .voiceInput{font-size:20px}
+  textarea{min-height:90px}
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+<h1>⚔ Quest Task Manager v4 Mobile Voice</h1>
+
+<section id="home" class="page active">
+  <div class="card">
+    <h2>🧙 主人公：隼人</h2>
+    <p>Lv.<span id="level">1</span> / EXP <span id="exp">0</span>/100</p>
+    <div class="expbar"><div id="expbar" class="exp"></div></div>
+    <p id="guild"></p>
+    <p>🎫 ガチャチケット：<span class="bigNum" id="tickets">0</span> 枚</p>
+    <p>📚 図鑑：<span id="ownedCount">0</span>/100体</p>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>＋ クエスト追加</h2>
+      <input id="title" class="voiceInput" placeholder="ここをタップ → スマホの🎤で音声入力">
+      <textarea id="memo" placeholder="メモ"></textarea>
+      <input id="date" type="date">
+      <select id="category">
+        <option>見積</option><option>メール</option><option>デザイン</option>
+        <option>現場</option><option>打合せ</option><option>その他</option>
+      </select>
+      <select id="priority">
+        <option value="1">★ 低</option><option value="2">★★ 普通</option>
+        <option value="3">★★★ 重要</option><option value="4">★★★★ 急ぎ</option>
+        <option value="5">★★★★★ 最重要</option>
+      </select>
+      <div class="voiceHelp">
+        <b>スマホ音声入力：</b><br>
+        ① 上の入力欄をタップ<br>
+        ② キーボードの🎤を押す<br>
+        ③ 話して文字にする<br>
+        例：「山内さん見積確認 金曜日まで」
+      </div>
+      <button onclick="addQuest()">クエスト追加</button>
+      <button class="goodBtn" onclick="voiceInput()">🎤 ブラウザ音声入力を試す</button>
+      <div class="quickRow">
+        <button class="blueBtn" onclick="quickToday()">今日</button>
+        <button class="purpleBtn" onclick="quickTomorrow()">明日</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📊 ステータス</h2>
+      <p><span class="badge">営業力</span> <span id="sales">0</span></p>
+      <p><span class="badge">見積力</span> <span id="estimate">0</span></p>
+      <p><span class="badge">デザイン力</span> <span id="design">0</span></p>
+      <p><span class="badge">現場力</span> <span id="site">0</span></p>
+      <p><span class="badge">管理力</span> <span id="manage">0</span></p>
+      <button class="danger" onclick="newGame()">🔴 ニューゲーム</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🔥 緊急クエスト</h2>
+    <div id="urgent"></div>
+  </div>
+</section>
+
+<section id="questsPage" class="page">
+  <div class="card"><h2>📜 未達成クエスト</h2><div id="active"></div></div>
+  <div class="card"><h2>✅ 完了済みクエスト</h2><div id="done"></div></div>
+</section>
+
+<section id="gachaPage" class="page">
+  <div class="card">
+    <h2>🎰 ギルド召喚ガチャ</h2>
+    <p>初回は10連無料。以降はチケットでガチャできます。</p>
+    <p>🎫 所持チケット：<span class="bigNum" id="tickets2">0</span>枚</p>
+    <button class="purpleBtn" onclick="firstTen()">初回10連ガチャ</button>
+    <button onclick="singleGacha()">1回ガチャ（1枚）</button>
+    <button class="blueBtn" onclick="tenGacha()">10連ガチャ（10枚）</button>
+    <p class="small">排出率：N 55% / R 28% / SR 12% / SSR 4% / SECRET 1%</p>
+  </div>
+</section>
+
+<section id="collectionPage" class="page">
+  <div class="card">
+    <h2>📚 キャラクター図鑑</h2>
+    <p>所持：<span id="ownedCount2">0</span>/100体</p>
+    <div id="collection" class="charGrid"></div>
+  </div>
+</section>
+
+<section id="helpPage" class="page">
+  <div class="card">
+    <h2>遊び方</h2>
+    <p>クエストを達成するとEXPとガチャチケットがもらえます。</p>
+    <p>重要度が高いほどEXPとチケットが増えます。</p>
+    <p>スマホで使う場合は、このHTMLをスマホに送ってブラウザで開けます。入力欄をタップして、スマホのキーボードに出る🎤マイクを使うと安定して音声入力できます。ただしPCとスマホのデータ同期はまだできません。</p>
+  </div>
+</section>
+</div>
+
+<div class="tabs">
+  <button class="active" onclick="showPage('home',this)">🏠<br>ホーム</button>
+  <button onclick="showPage('questsPage',this)">📜<br>クエスト</button>
+  <button onclick="showPage('gachaPage',this)">🎰<br>ガチャ</button>
+  <button onclick="showPage('collectionPage',this)">📚<br>図鑑</button>
+  <button onclick="showPage('helpPage',this)">❓<br>説明</button>
+</div>
+
+<div id="modal" class="modal">
+  <div class="modalBox">
+    <h2 id="modalTitle">ガチャ結果</h2>
+    <div id="gachaResult" class="gachaResult"></div>
+    <button onclick="closeModal()">閉じる</button>
+  </div>
+</div>
+
+<script>
+const faces=["🧙","⚔️","🛡️","🏹","🔮","🐉","🦊","🐺","🦁","🐯","🐲","👑","💎","🔥","❄️","⚡","🌙","☀️","🌸","🍀"];
+const jobs=["見積騎士","営業レンジャー","現場ガーディアン","メール術士","デザインメイジ","施工ファイター","納期ハンター","資料プリースト","会議サムライ","段取りマスター"];
+const rares=["N","R","SR","SSR","SECRET"];
+function buildCharacters(){
+  let arr=[];
+  for(let i=1;i<=100;i++){
+    let rare=i<=55?"N":i<=83?"R":i<=95?"SR":i<=99?"SSR":"SECRET";
+    arr.push({id:i,name:`${jobs[(i-1)%jobs.length]} No.${i}`,face:faces[(i-1)%faces.length],rare});
+  }
+  return arr;
+}
+const characters=buildCharacters();
+
+let data=JSON.parse(localStorage.getItem("questDataV3"))||{
+ level:1,exp:0,tickets:0,firstTen:false,
+ stats:{sales:0,estimate:0,design:0,site:0,manage:0},
+ quests:[],owned:{}
+};
+function save(){localStorage.setItem("questDataV3",JSON.stringify(data));}
+function showPage(id,btn){
+ document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+ document.getElementById(id).classList.add("active");
+ document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
+ btn.classList.add("active");
+ render();
+}
+function addQuest(){
+ const title=document.getElementById("title").value.trim();
+ if(!title){alert("クエスト名を入力してください");return;}
+ data.quests.push({
+  id:Date.now(),title,memo:document.getElementById("memo").value,
+  date:document.getElementById("date").value,
+  category:document.getElementById("category").value,
+  priority:Number(document.getElementById("priority").value),done:false
+ });
+ document.getElementById("title").value="";document.getElementById("memo").value="";
+ save();render();
+}
+function completeQuest(id){
+ const q=data.quests.find(x=>x.id===id); if(!q||q.done)return;
+ q.done=true;
+ let gain=20+q.priority*15;
+ let ticketGain=Math.max(1,Math.floor(q.priority/2));
+ if(q.priority>=5)ticketGain=3;
+ data.exp+=gain; data.tickets+=ticketGain;
+ while(data.exp>=100){data.exp-=100;data.level++;alert("🎉 レベルアップ！ Lv."+data.level+"！");}
+ if(q.category==="見積")data.stats.estimate++;
+ if(q.category==="メール")data.stats.manage++;
+ if(q.category==="デザイン")data.stats.design++;
+ if(q.category==="現場")data.stats.site++;
+ if(q.category==="打合せ")data.stats.sales++;
+ alert(`クエスト達成！ EXP +${gain} / ガチャチケット +${ticketGain}`);
+ save();render();
+}
+function deleteQuest(id){
+ if(confirm("このクエストを削除しますか？")){data.quests=data.quests.filter(q=>q.id!==id);save();render();}
+}
+function newGame(){
+ if(confirm("全部リセットしますか？")){localStorage.removeItem("questDataV3");location.reload();}
+}
+
+function quickToday(){
+ const d=new Date();
+ document.getElementById("date").value=d.toISOString().slice(0,10);
+}
+function quickTomorrow(){
+ const d=new Date();
+ d.setDate(d.getDate()+1);
+ document.getElementById("date").value=d.toISOString().slice(0,10);
+}
+
+function voiceInput(){
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!SR){alert("音声入力はEdgeかChromeで試してください。");return;}
+ const rec=new SR(); rec.lang="ja-JP"; rec.start();
+ rec.onresult=e=>document.getElementById("title").value=e.results[0][0].transcript;
+}
+function isToday(date){if(!date)return false;let t=new Date(),d=new Date(date);return t.toDateString()===d.toDateString();}
+function isOverdue(date){if(!date)return false;let today=new Date();today.setHours(0,0,0,0);return new Date(date)<today;}
+function questHTML(q){
+ let status="";
+ if(isOverdue(q.date)&&!q.done)status='<p class="warn">⚠ 期限切れ</p>';
+ else if(isToday(q.date)&&!q.done)status='<p class="today">🔥 今日のクエスト</p>';
+ return `<div class="quest"><h3 class="${q.done?'done':''}">${q.title}</h3>
+ <p>${"★".repeat(q.priority)} / ${q.category} / 期限：${q.date||"未設定"}</p>${status}
+ <p>${q.memo||""}</p>
+ ${q.done?"":`<button onclick="completeQuest(${q.id})">達成</button>`}
+ <button class="danger" onclick="deleteQuest(${q.id})">削除</button></div>`;
+}
+function drawOne(){
+ let r=Math.random()*100,rare="N";
+ if(r<1)rare="SECRET"; else if(r<5)rare="SSR"; else if(r<17)rare="SR"; else if(r<45)rare="R";
+ let pool=characters.filter(c=>c.rare===rare);
+ let c=pool[Math.floor(Math.random()*pool.length)];
+ data.owned[c.id]=(data.owned[c.id]||0)+1;
+ return c;
+}
+function charCard(c,locked=false){
+ return `<div class="char ${c.rare} ${locked?'locked':''}">
+ <div class="face">${locked?"❔":c.face}</div>
+ <div class="name">${locked?"未発見":c.name}</div>
+ <div class="rare">${c.rare}</div>
+ <div class="small">${locked?"":`所持 ${data.owned[c.id]||0}`}</div></div>`;
+}
+function showGacha(chars,title){
+ document.getElementById("modalTitle").textContent=title;
+ document.getElementById("gachaResult").innerHTML=chars.map(c=>charCard(c)).join("");
+ document.getElementById("modal").classList.add("show");
+}
+function closeModal(){document.getElementById("modal").classList.remove("show");render();}
+function firstTen(){
+ if(data.firstTen){alert("初回10連は使用済みです。");return;}
+ let res=[];for(let i=0;i<10;i++)res.push(drawOne());
+ data.firstTen=true;save();showGacha(res,"初回10連ガチャ結果");
+}
+function singleGacha(){
+ if(data.tickets<1){alert("チケットが足りません。");return;}
+ data.tickets-=1;let res=[drawOne()];save();showGacha(res,"1回ガチャ結果");
+}
+function tenGacha(){
+ if(data.tickets<10){alert("チケットが10枚必要です。");return;}
+ data.tickets-=10;let res=[];for(let i=0;i<10;i++)res.push(drawOne());
+ save();showGacha(res,"10連ガチャ結果");
+}
+function render(){
+ document.getElementById("level").textContent=data.level;
+ document.getElementById("exp").textContent=data.exp;
+ document.getElementById("expbar").style.width=data.exp+"%";
+ document.getElementById("tickets").textContent=data.tickets;
+ document.getElementById("tickets2").textContent=data.tickets;
+ document.getElementById("sales").textContent=data.stats.sales;
+ document.getElementById("estimate").textContent=data.stats.estimate;
+ document.getElementById("design").textContent=data.stats.design;
+ document.getElementById("site").textContent=data.stats.site;
+ document.getElementById("manage").textContent=data.stats.manage;
+ let ownedCount=Object.keys(data.owned).length;
+ document.getElementById("ownedCount").textContent=ownedCount;
+ document.getElementById("ownedCount2").textContent=ownedCount;
+ let remaining=data.quests.filter(q=>!q.done).length;
+ document.getElementById("guild").textContent=remaining>0?`ギルドより連絡です。未達成クエストが${remaining}件あります。`:"全クエスト達成！";
+ document.getElementById("urgent").innerHTML=data.quests.filter(q=>!q.done&&(isToday(q.date)||isOverdue(q.date))).map(questHTML).join("")||"緊急クエストはありません。";
+ document.getElementById("active").innerHTML=data.quests.filter(q=>!q.done).map(questHTML).join("")||"未達成クエストはありません。";
+ document.getElementById("done").innerHTML=data.quests.filter(q=>q.done).map(questHTML).join("")||"完了済みクエストはありません。";
+ document.getElementById("collection").innerHTML=characters.map(c=>charCard(c,!data.owned[c.id])).join("");
+}
+render();
+</script>
+</body>
+</html>
