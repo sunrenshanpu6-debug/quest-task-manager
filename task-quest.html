@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<title>Quest Task Manager v4 Mobile Voice</title>
+<title>Quest Task Manager v5 Firebase Sync</title>
 <style>
 :root{
   --bg:#0b1020;--card:#171f35;--card2:#111827;--line:#334155;
@@ -59,13 +59,30 @@ button:active{transform:scale(.98)}
   textarea{min-height:90px}
 }
 
+
+.loginBox{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.loginBox button{width:auto;min-width:150px}
+.syncStatus{font-size:13px;color:#cbd5e1;margin-top:6px}
+.userPill{display:inline-block;background:#064e3b;color:#dcfce7;border:1px solid #22c55e;border-radius:999px;padding:6px 10px}
+
 </style>
 </head>
 <body>
 <div class="app">
-<h1>⚔ Quest Task Manager v4 Mobile Voice</h1>
+<h1>⚔ Quest Task Manager v5 Firebase Sync</h1>
 
 <section id="home" class="page active">
+
+<div class="card">
+  <h2>☁ Google同期</h2>
+  <div class="loginBox">
+    <button class="blueBtn" onclick="loginGoogle()">Googleでログイン</button>
+    <button class="danger" onclick="logoutGoogle()">ログアウト</button>
+    <span id="userInfo" class="userPill">未ログイン</span>
+  </div>
+  <div id="syncStatus" class="syncStatus">未ログイン時はこの端末だけに保存されます。</div>
+</div>
+
   <div class="card">
     <h2>🧙 主人公：隼人</h2>
     <p>Lv.<span id="level">1</span> / EXP <span id="exp">0</span>/100</p>
@@ -152,7 +169,7 @@ button:active{transform:scale(.98)}
     <h2>遊び方</h2>
     <p>クエストを達成するとEXPとガチャチケットがもらえます。</p>
     <p>重要度が高いほどEXPとチケットが増えます。</p>
-    <p>スマホで使う場合は、このHTMLをスマホに送ってブラウザで開けます。入力欄をタップして、スマホのキーボードに出る🎤マイクを使うと安定して音声入力できます。ただしPCとスマホのデータ同期はまだできません。</p>
+    <p>GoogleログインするとPCとスマホでデータ同期できます。スマホでは入力欄をタップして、キーボードの🎤マイクを使うと安定して音声入力できます。</p>
   </div>
 </section>
 </div>
@@ -173,10 +190,28 @@ button:active{transform:scale(.98)}
   </div>
 </div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAZ8-26GTGYtPcD5Zw1siFeVZE2st3i4Ws",
+  authDomain: "questtaskmanager.firebaseapp.com",
+  databaseURL: "https://questtaskmanager-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "questtaskmanager",
+  storageBucket: "questtaskmanager.firebasestorage.app",
+  messagingSenderId: "1012729903812",
+  appId: "1:1012729903812:web:06eeb21f917b6b13a0a791"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+const provider = new GoogleAuthProvider();
+
 const faces=["🧙","⚔️","🛡️","🏹","🔮","🐉","🦊","🐺","🦁","🐯","🐲","👑","💎","🔥","❄️","⚡","🌙","☀️","🌸","🍀"];
 const jobs=["見積騎士","営業レンジャー","現場ガーディアン","メール術士","デザインメイジ","施工ファイター","納期ハンター","資料プリースト","会議サムライ","段取りマスター"];
-const rares=["N","R","SR","SSR","SECRET"];
 function buildCharacters(){
   let arr=[];
   for(let i=1;i<=100;i++){
@@ -187,12 +222,84 @@ function buildCharacters(){
 }
 const characters=buildCharacters();
 
-let data=JSON.parse(localStorage.getItem("questDataV3"))||{
- level:1,exp:0,tickets:0,firstTen:false,
- stats:{sales:0,estimate:0,design:0,site:0,manage:0},
- quests:[],owned:{}
-};
-function save(){localStorage.setItem("questDataV3",JSON.stringify(data));}
+const defaultData = () => ({
+  level:1, exp:0, tickets:0, firstTen:false,
+  stats:{sales:0,estimate:0,design:0,site:0,manage:0},
+  quests:[], owned:{}
+});
+
+let currentUser = null;
+let remoteRef = null;
+let remoteReady = false;
+let saving = false;
+let data = JSON.parse(localStorage.getItem("questDataV5") || localStorage.getItem("questDataV3") || "null") || defaultData();
+
+function setSyncStatus(text){
+  const el=document.getElementById("syncStatus");
+  if(el) el.textContent=text;
+}
+function setUserInfo(text){
+  const el=document.getElementById("userInfo");
+  if(el) el.textContent=text;
+}
+
+async function save(){
+  localStorage.setItem("questDataV5", JSON.stringify(data));
+  if(currentUser && remoteRef && remoteReady){
+    saving = true;
+    await set(remoteRef, data);
+    saving = false;
+    setSyncStatus("☁ 同期済み");
+  } else {
+    setSyncStatus("この端末に保存しました。ログインすると同期できます。");
+  }
+}
+
+async function loginGoogle(){
+  try{
+    await signInWithPopup(auth, provider);
+  }catch(e){
+    alert("ログインできませんでした。スマホの場合は、GitHub PagesなどURL公開後の利用が安定します。\n\n" + e.message);
+  }
+}
+
+async function logoutGoogle(){
+  await signOut(auth);
+}
+
+onAuthStateChanged(auth, async user=>{
+  currentUser = user;
+  remoteReady = false;
+  if(!user){
+    remoteRef = null;
+    setUserInfo("未ログイン");
+    setSyncStatus("未ログイン時はこの端末だけに保存されます。");
+    render();
+    return;
+  }
+  setUserInfo(user.displayName || user.email || "ログイン中");
+  setSyncStatus("☁ クラウドデータ確認中...");
+  remoteRef = ref(db, `users/${user.uid}/questData`);
+  const snap = await get(remoteRef);
+  if(snap.exists()){
+    data = snap.val();
+    localStorage.setItem("questDataV5", JSON.stringify(data));
+    setSyncStatus("☁ クラウドから読み込みました");
+  }else{
+    await set(remoteRef, data);
+    setSyncStatus("☁ この端末のデータをクラウドに初回保存しました");
+  }
+  remoteReady = true;
+  onValue(remoteRef, snapshot=>{
+    if(!snapshot.exists() || saving) return;
+    data = snapshot.val();
+    localStorage.setItem("questDataV5", JSON.stringify(data));
+    render();
+    setSyncStatus("☁ 同期済み");
+  });
+  render();
+});
+
 function showPage(id,btn){
  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
  document.getElementById(id).classList.add("active");
@@ -200,6 +307,7 @@ function showPage(id,btn){
  btn.classList.add("active");
  render();
 }
+
 function addQuest(){
  const title=document.getElementById("title").value.trim();
  if(!title){alert("クエスト名を入力してください");return;}
@@ -212,6 +320,7 @@ function addQuest(){
  document.getElementById("title").value="";document.getElementById("memo").value="";
  save();render();
 }
+
 function completeQuest(id){
  const q=data.quests.find(x=>x.id===id); if(!q||q.done)return;
  q.done=true;
@@ -228,11 +337,19 @@ function completeQuest(id){
  alert(`クエスト達成！ EXP +${gain} / ガチャチケット +${ticketGain}`);
  save();render();
 }
+
 function deleteQuest(id){
  if(confirm("このクエストを削除しますか？")){data.quests=data.quests.filter(q=>q.id!==id);save();render();}
 }
+
 function newGame(){
- if(confirm("全部リセットしますか？")){localStorage.removeItem("questDataV3");location.reload();}
+ if(confirm("全部リセットしますか？ Google同期中の場合はクラウド側もリセットされます。")){
+  data = defaultData();
+  localStorage.setItem("questDataV5", JSON.stringify(data));
+  localStorage.removeItem("questDataV3");
+  save();
+  render();
+ }
 }
 
 function quickToday(){
@@ -247,7 +364,7 @@ function quickTomorrow(){
 
 function voiceInput(){
  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
- if(!SR){alert("音声入力はEdgeかChromeで試してください。");return;}
+ if(!SR){alert("音声入力はEdgeかChromeで試してください。スマホでは入力欄をタップしてキーボードの🎤が一番安定です。");return;}
  const rec=new SR(); rec.lang="ja-JP"; rec.start();
  rec.onresult=e=>document.getElementById("title").value=e.results[0][0].transcript;
 }
@@ -309,16 +426,22 @@ function render(){
  document.getElementById("design").textContent=data.stats.design;
  document.getElementById("site").textContent=data.stats.site;
  document.getElementById("manage").textContent=data.stats.manage;
- let ownedCount=Object.keys(data.owned).length;
+ let ownedCount=Object.keys(data.owned||{}).length;
  document.getElementById("ownedCount").textContent=ownedCount;
  document.getElementById("ownedCount2").textContent=ownedCount;
- let remaining=data.quests.filter(q=>!q.done).length;
+ let remaining=(data.quests||[]).filter(q=>!q.done).length;
  document.getElementById("guild").textContent=remaining>0?`ギルドより連絡です。未達成クエストが${remaining}件あります。`:"全クエスト達成！";
- document.getElementById("urgent").innerHTML=data.quests.filter(q=>!q.done&&(isToday(q.date)||isOverdue(q.date))).map(questHTML).join("")||"緊急クエストはありません。";
- document.getElementById("active").innerHTML=data.quests.filter(q=>!q.done).map(questHTML).join("")||"未達成クエストはありません。";
- document.getElementById("done").innerHTML=data.quests.filter(q=>q.done).map(questHTML).join("")||"完了済みクエストはありません。";
- document.getElementById("collection").innerHTML=characters.map(c=>charCard(c,!data.owned[c.id])).join("");
+ document.getElementById("urgent").innerHTML=(data.quests||[]).filter(q=>!q.done&&(isToday(q.date)||isOverdue(q.date))).map(questHTML).join("")||"緊急クエストはありません。";
+ document.getElementById("active").innerHTML=(data.quests||[]).filter(q=>!q.done).map(questHTML).join("")||"未達成クエストはありません。";
+ document.getElementById("done").innerHTML=(data.quests||[]).filter(q=>q.done).map(questHTML).join("")||"完了済みクエストはありません。";
+ document.getElementById("collection").innerHTML=characters.map(c=>charCard(c,!data.owned?.[c.id])).join("");
 }
+
+Object.assign(window, {
+  loginGoogle, logoutGoogle, showPage, addQuest, completeQuest, deleteQuest, newGame,
+  quickToday, quickTomorrow, voiceInput, closeModal, firstTen, singleGacha, tenGacha
+});
+
 render();
 </script>
 </body>
