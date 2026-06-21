@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Quest Task Manager v10 ゲーム強化版</title>
+<style>
+:root{--bg:#050814;--dq:#08296b;--dq2:#061b48;--line:#fff;--gold:#facc15;--red:#ef4444;--green:#22c55e;--blue:#38bdf8;--purple:#a855f7}
+*{box-sizing:border-box}
+body{margin:0;background:#050814;color:#fff;font-family:"Segoe UI",sans-serif}
+.app{max-width:1180px;margin:auto;padding:12px 12px 92px}
+h1{text-align:center;color:var(--gold);text-shadow:0 0 16px #facc15;font-size:26px}
+.win{background:linear-gradient(180deg,var(--dq),var(--dq2));border:3px solid #fff;border-radius:12px;padding:14px;margin:12px 0;box-shadow:0 0 0 3px #000,0 10px 24px #000}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:760px){.grid,.grid3{grid-template-columns:1fr}.app{padding-bottom:92px}h1{font-size:22px}}
+input,textarea,select,button{width:100%;padding:12px;margin:6px 0;border-radius:10px;border:none;font-size:16px}
+input,textarea,select{background:#07142e;color:white;border:1px solid #fff}
+button{background:var(--gold);color:#111;font-weight:900;cursor:pointer}
+button:active{transform:scale(.98)}
+.red{background:var(--red);color:#fff}.green{background:var(--green);color:#052e16}.blue{background:var(--blue);color:#082f49}.purple{background:var(--purple);color:#fff}
+.tabs{position:fixed;bottom:0;left:0;right:0;background:#020617;border-top:2px solid #fff;display:grid;grid-template-columns:repeat(8,1fr);z-index:50}
+.tabs button{border-radius:0;margin:0;padding:8px 1px;background:#08296b;color:#fff;border-right:1px solid #fff;font-size:10px}
+.tabs button.active{background:#facc15;color:#111}
+.page{display:none}.page.active{display:block}
+.bar{height:20px;background:#111827;border:1px solid #fff;border-radius:999px;overflow:hidden}.fill{height:100%;background:linear-gradient(90deg,#f59e0b,#facc15)}
+.hpfill{height:100%;background:linear-gradient(90deg,#ef4444,#fb7185)}
+.card{background:#061b48;border:2px solid #fff;border-radius:10px;padding:10px;margin:8px 0}
+.quest,.boss,.project,.facility{background:#03112e;border:1px solid #fff;border-radius:10px;padding:10px;margin:8px 0}
+.badge{display:inline-block;background:#000;padding:4px 8px;border:1px solid #fff;border-radius:999px;margin:3px;font-size:12px}
+.charGrid,.equipGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(125px,1fr));gap:9px}
+.char,.equip{background:#03112e;border:2px solid #fff;border-radius:10px;padding:8px;text-align:center;min-height:130px}
+.face{font-size:34px}.name{font-weight:800;font-size:13px;min-height:36px}.small{font-size:12px;color:#dbeafe}.big{font-size:28px;color:#facc15;font-weight:900}
+.N{border-color:#94a3b8}.R{border-color:#38bdf8}.SR{border-color:#a78bfa}.SSR{border-color:#facc15}.UR{border-color:#22c55e}.LR{border-color:#fb7185}.SECRET{border-color:#fff;box-shadow:0 0 25px #fff}
+.locked{filter:grayscale(1);opacity:.45}.equipped{outline:4px solid #facc15}
+.modal,.movie{position:fixed;inset:0;background:#000d;display:none;align-items:center;justify-content:center;z-index:100;padding:12px}
+.modal.show,.movie.show{display:flex}
+.box{background:#08296b;border:3px solid #fff;border-radius:14px;max-width:930px;width:100%;max-height:90vh;overflow:auto;padding:16px;text-align:center;box-shadow:0 0 0 4px #000}
+.resultGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(125px,1fr));gap:9px;margin-top:10px}
+.movieTitle{font-size:36px;color:#facc15;font-weight:900;text-shadow:0 0 18px #facc15;animation:pulse .7s infinite alternate}
+.movieIcon{font-size:90px;animation:pulse .7s infinite alternate}
+.rainbow{background:linear-gradient(90deg,#38bdf8,#22c55e,#facc15,#fb7185,#a855f7);-webkit-background-clip:text;color:transparent}
+.damage{font-size:44px;color:#fb7185;font-weight:900;text-shadow:0 0 18px #ef4444}
+@keyframes pulse{from{transform:scale(1);filter:brightness(1)}to{transform:scale(1.06);filter:brightness(1.7)}}
+
+.quickPanel{background:#03112e;border:2px dashed #facc15;border-radius:12px;padding:12px;margin:10px 0}
+.templateGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.filterGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.dailyItem{background:#03112e;border:1px solid #fff;border-radius:10px;padding:10px;margin:6px 0}
+.editBox input,.editBox textarea,.editBox select{margin-bottom:8px}
+@media(max-width:760px){.templateGrid,.filterGrid{grid-template-columns:1fr 1fr}}
+
+/* v10 game boost */
+.gamePanel{border-color:#facc15;box-shadow:0 0 22px #facc1544}
+.skillGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+@media(max-width:760px){.skillGrid{grid-template-columns:1fr}}
+.skillCard{background:#03112e;border:1px solid #fff;border-radius:10px;padding:10px}
+.skillOn{border-color:#facc15;box-shadow:0 0 14px #facc15}
+.treasure{font-size:44px;animation:pulse .8s infinite alternate}
+.combo{font-size:24px;color:#facc15;font-weight:900}
+.stamina{color:#4ade80;font-weight:900}
+.talk{background:#000;border:2px solid #fff;border-radius:10px;padding:10px;margin:8px 0}
+</style>
+</head>
+<body>
+<div class="app">
+<h1>⚔ Quest Task Manager v10 ゲーム強化版</h1>
+
+<section id="home" class="page active">
+<div class="win">
+<h2>☁ Google同期</h2>
+<button class="blue" onclick="loginGoogle()">Googleでログイン</button>
+<button class="red" onclick="logoutGoogle()">ログアウト</button>
+<p><span class="badge" id="userInfo">未ログイン</span></p>
+<p id="syncStatus">未ログイン時はこの端末だけに保存されます。</p>
+</div>
+
+<div class="grid">
+<div class="win">
+<h2>🧙 隼人のステータス</h2>
+<p>ランク <span class="big" id="rank">F</span> / Lv.<span id="level">1</span> / EXP <span id="exp">0</span>/100</p>
+<div class="bar"><div id="expbar" class="fill"></div></div>
+<p id="guild"></p>
+<p>⚔ 総戦闘力：<span class="big" id="power">0</span></p>
+<p>💰 Gold：<span id="gold">0</span> / 🏢 会社資金：<span id="companyGold">0</span></p>
+<p>🎫 キャラ券：<span id="tickets">0</span> / 🛡 装備券：<span id="equipTickets">0</span></p>
+</div>
+<div class="win">
+<h2>👥 パーティー</h2>
+<div id="partyView"></div>
+<button class="purple" onclick="showPage('partyPage',tabBtns()[4])">酒場で編成</button>
+</div>
+</div>
+
+
+<div class="win quickPanel">
+<h2>⚡ クイック追加 / 今日やること</h2>
+<input id="quickInput" placeholder="例：見積確認 明日 ★★★">
+<button class="green" onclick="quickAdd()">3秒クエスト追加</button>
+<div class="templateGrid">
+<button onclick="templateQuest('見積作成','見積',3)">見積作成</button>
+<button onclick="templateQuest('メール返信','メール',2)">メール返信</button>
+<button onclick="templateQuest('図面確認','デザイン',3)">図面確認</button>
+<button onclick="templateQuest('協力会社へ確認','現場',3)">協力会社確認</button>
+<button onclick="templateQuest('クライアント確認','打合せ',4)">クライアント確認</button>
+<button onclick="templateQuest('今日のタスク整理','その他',1)">タスク整理</button>
+</div>
+<div id="todayBrief"></div>
+</div>
+
+<div class="grid">
+<div class="win">
+<h2>＋ クエスト追加</h2>
+<input id="title" placeholder="ここをタップ → スマホの🎤で音声入力">
+<textarea id="memo" placeholder="メモ"></textarea>
+<input id="date" type="date">
+<select id="category"><option>見積</option><option>メール</option><option>デザイン</option><option>現場</option><option>打合せ</option><option>その他</option></select>
+<select id="priority"><option value="1">★ 低</option><option value="2">★★ 普通</option><option value="3">★★★ 重要</option><option value="4">★★★★ 急ぎ</option><option value="5">★★★★★ 最重要</option></select>
+<select id="projectSelect"><option value="">案件なし</option></select>
+<button onclick="addQuest()">クエスト追加</button>
+<button class="green" onclick="voiceInput()">🎤 音声入力を試す</button>
+<div class="grid"><button class="blue" onclick="quickToday()">今日</button><button class="purple" onclick="quickTomorrow()">明日</button></div>
+</div>
+<div class="win">
+<h2>📊 仕事ステータス</h2>
+<p><span class="badge">営業力</span> <span id="sales">0</span></p>
+<p><span class="badge">見積力</span> <span id="estimate">0</span></p>
+<p><span class="badge">デザイン力</span> <span id="design">0</span></p>
+<p><span class="badge">現場力</span> <span id="site">0</span></p>
+<p><span class="badge">管理力</span> <span id="manage">0</span></p>
+<button class="red" onclick="newGame()">ニューゲーム</button>
+</div>
+</div>
+
+<div class="win">
+<h2>📅 ログインボーナス / デイリー任務</h2>
+<button class="purple" onclick="claimLoginBonus()">ログインボーナス受取</button>
+<div id="dailyMissions"></div>
+</div>
+
+
+<div class="win gamePanel">
+<h2>🎮 v10 ゲーム要素</h2>
+<p>スタミナ：<span class="stamina" id="stamina">0</span>/100　連続達成コンボ：<span class="combo" id="combo">0</span></p>
+<p>職業：<span class="badge" id="jobName">営業勇者</span>　スキルポイント：<span id="skillPoints">0</span></p>
+<div id="partyTalk" class="talk"></div>
+<button class="purple" onclick="showPage('skillPage',tabBtns()[7])">スキルを見る</button>
+<button class="green" onclick="openTreasure()">宝箱を開ける</button>
+</div>
+
+<div class="win"><h2>🔥 緊急クエスト</h2><div id="urgent"></div></div>
+</section>
+
+<section id="questPage" class="page">
+<div class="win">
+<h2>🔍 検索・絞り込み</h2>
+<input id="searchText" placeholder="検索ワード">
+<div class="filterGrid">
+<select id="filterMode"><option value="all">全部</option><option value="today">今日</option><option value="overdue">期限切れ</option><option value="high">重要★★★以上</option></select>
+<select id="filterCategory"><option value="">カテゴリ全部</option><option>見積</option><option>メール</option><option>デザイン</option><option>現場</option><option>打合せ</option><option>その他</option></select>
+<button onclick="render()">絞り込み</button>
+<button class="blue" onclick="exportBackup,learnSkill,openTreasure,dailyDungeonFight()">バックアップ出力</button>
+</div>
+</div>
+<div class="win"><h2>📜 未達成</h2><div id="active"></div></div>
+<div class="win"><h2>✅ 完了済み</h2><div id="done"></div></div>
+</section>
+
+<section id="gachaPage" class="page">
+<div class="grid3">
+<div class="win"><h2>🎰 冒険者募集</h2><p>🎫 <span id="tickets2">0</span></p><button class="purple" onclick="firstTen()">初回10連</button><button onclick="charGacha(1,false)">1回</button><button class="blue" onclick="charGacha(10,false)">10連</button></div>
+<div class="win"><h2>🛡 装備ガチャ</h2><p>🛡 <span id="equipTickets2">0</span></p><button onclick="equipGacha(1,false)">1回</button><button class="blue" onclick="equipGacha(10,false)">10連</button></div>
+<div class="win"><h2>✨ お試し演出</h2><p>獲得なし。演出だけ。</p><button class="purple" onclick="charGacha(10,true)">お試しキャラ10連</button><button class="purple" onclick="equipGacha(10,true)">お試し装備10連</button></div>
+</div>
+</section>
+
+<section id="battlePage" class="page">
+<div class="win"><h2>🌎 ワールドマップ</h2><div id="worldMap"></div></div>
+<div class="win"><h2>🏰 ボスダンジョン</h2><div id="bossList"></div></div>
+</section>
+
+<section id="partyPage" class="page">
+<div class="win"><h2>🍺 ルイーダの酒場</h2><p>仲間4人まで編成できます。</p><div id="ownedChars" class="charGrid"></div></div>
+</section>
+
+<section id="equipPage" class="page">
+<div class="win"><h2>⚙ 装備・強化</h2><p>クリックで装備。同じ装備3個で+1強化。</p><div id="ownedEquips" class="equipGrid"></div></div>
+</section>
+
+<section id="projectPage" class="page">
+<div class="win"><h2>📁 案件レイド</h2><input id="projectName" placeholder="案件名"><input id="projectHp" type="number" placeholder="案件HP 例 50000"><button onclick="addProject()">案件追加</button><div id="projects"></div></div>
+</section>
+
+<section id="companyPage" class="page">
+<div class="win"><h2>🏢 会社発展</h2><p>クエスト・案件で会社資金を増やして施設を強化。</p><div id="facilities"></div></div>
+</section>
+
+
+<section id="skillPage" class="page">
+<div class="win">
+<h2>🌟 スキルツリー</h2>
+<p>スキルポイントを使って仕事効率とゲーム報酬を強化。</p>
+<div class="skillGrid" id="skillTree"></div>
+</div>
+<div class="win">
+<h2>🎲 デイリーダンジョン</h2>
+<p>1日3回まで挑戦。勝つと宝箱とチケット獲得。</p>
+<div id="dailyDungeon"></div>
+</div>
+<div class="win">
+<h2>🏆 実績強化</h2>
+<div id="v10Achievements"></div>
+</div>
+</section>
+
+<section id="bookPage" class="page">
+<div class="win"><h2>📚 図鑑・実績</h2><p>キャラ <span id="ownedCount">0</span>/200 / 装備 <span id="ownedEquipCount">0</span>/1000</p><div id="achievements"></div><h3>キャラ図鑑</h3><div id="collection" class="charGrid"></div></div>
+</section>
+</div>
+
+<div class="tabs">
+<button class="active" onclick="showPage('home',this)">🏠<br>ホーム</button>
+<button onclick="showPage('questPage',this)">📜<br>クエスト</button>
+<button onclick="showPage('gachaPage',this)">🎰<br>募集</button>
+<button onclick="showPage('battlePage',this)">🏰<br>戦闘</button>
+<button onclick="showPage('partyPage',this)">👥<br>酒場</button>
+<button onclick="showPage('equipPage',this)">⚙<br>装備</button>
+<button onclick="showPage('projectPage',this)">📁<br>案件</button>
+<button onclick="showPage('companyPage',this)">🏢<br>会社</button>
+</div>
+
+<div id="modal" class="modal"><div class="box"><h2 id="modalTitle">結果</h2><div id="resultGrid" class="resultGrid"></div><button onclick="closeModal()">閉じる</button></div></div>
+
+<div id="editModal" class="modal"><div class="box editBox">
+<h2>クエスト編集</h2>
+<input id="editTitle">
+<textarea id="editMemo"></textarea>
+<input id="editDate" type="date">
+<select id="editCategory"><option>見積</option><option>メール</option><option>デザイン</option><option>現場</option><option>打合せ</option><option>その他</option></select>
+<select id="editPriority"><option value="1">★ 低</option><option value="2">★★ 普通</option><option value="3">★★★ 重要</option><option value="4">★★★★ 急ぎ</option><option value="5">★★★★★ 最重要</option></select>
+<select id="editProject"></select>
+<button onclick="saveEditQuest()">保存</button>
+<button class="red" onclick="closeEdit()">閉じる</button>
+</div></div>
+<div id="movie" class="movie"><div class="box"><div id="movieIcon" class="movieIcon">🚪</div><div id="movieTitle" class="movieTitle">演出</div><p id="movieSub"></p></div></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js";
+const firebaseConfig={apiKey:"AIzaSyAZ8-26GTGYtPcD5Zw1siFeVZE2st3i4Ws",authDomain:"questtaskmanager.firebaseapp.com",databaseURL:"https://questtaskmanager-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"questtaskmanager",storageBucket:"questtaskmanager.firebasestorage.app",messagingSenderId:"1012729903812",appId:"1:1012729903812:web:06eeb21f917b6b13a0a791"};
+const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getDatabase(app),provider=new GoogleAuthProvider();
+const faces=["🧙","⚔️","🛡️","🏹","🔮","🐉","🦊","🐺","🦁","🐯","🐲","👑","💎","🔥","❄️","⚡","🌙","☀️","🌸","🍀","🤖","👺","🦅","🦄","🦾"];
+const roles=["タンク","アタッカー","ヒーラー","サポート"];
+const jobs=["営業騎士","見積術士","施工戦士","現場守護者","デザイン魔導士","納期狩人","資料僧侶","会議侍","代理店勇者","積算賢者"];
+const equipFaces={weapon:["🔨","🪛","🗡️","📐","🧮","📋","⚡","🔥"],armor:["⛑️","🦺","🛡️","🥾","🧤","🧥"],accessory:["💍","🏅","💎","📎","🪪","📘","🧿"]};
+const rankNames=["F","E","D","C","B","A","S","SS","SSS"];
+const world=["営業の村","見積鉱山","施工火山","展示会城","魔王城","創造神殿","混沌の狭間"];
+const bossBase=["見積ゴブリン","メールスライム","仕様変更バット","施工オーガ","納期ドラゴン","予算破壊神","確認待ちゴーレム","会議キマイラ","展示会魔王","創造神アルテリオン","混沌神カオス"];
+function rarityByIndex(i,total){let p=i/total*100;if(p<50)return"N";if(p<75)return"R";if(p<90)return"SR";if(p<97)return"SSR";if(p<99)return"UR";if(p<99.8)return"LR";return"SECRET"}
+function rarityPower(r){return {N:10,R:28,SR:65,SSR:130,UR:230,LR:390,SECRET:777}[r]||1}
+function drawRarity(){let r=Math.random()*100;if(r<.2)return"SECRET";if(r<1.2)return"LR";if(r<4)return"UR";if(r<10)return"SSR";if(r<25)return"SR";if(r<55)return"R";return"N"}
+function chars(){return Array.from({length:200},(_,i)=>{let id=i+1,rare=rarityByIndex(i,200),role=roles[i%4];return{id,name:`${jobs[i%jobs.length]} No.${id}`,face:faces[i%faces.length],rare,role,atk:rarityPower(rare)+i%35,def:Math.floor(rarityPower(rare)/2),heal:role==="ヒーラー"?Math.floor(rarityPower(rare)/2):0,buff:role==="サポート"?Math.floor(rarityPower(rare)/3):0}})}
+function equips(){let arr=[],id=1;for(const [type,count] of [["weapon",400],["armor",300],["accessory",300]])for(let i=0;i<count;i++,id++){let rare=rarityByIndex(i,count),base=rarityPower(rare)+i%45,set=["営業","見積","施工","展示会"][i%4];arr.push({id,type,set,rare,name:`${set}${type==="weapon"?"の武器":type==="armor"?"の防具":"の指輪"} No.${id}`,face:equipFaces[type][i%equipFaces[type].length],atk:type==="weapon"?base:Math.floor(base/5),def:type==="armor"?base:Math.floor(base/5),bonus:type==="accessory"?Math.floor(base/2):0,level:0})}return arr}
+const C=chars(),E=equips();
+const defaultData=()=>({version:8,level:1,exp:0,gold:0,companyGold:0,tickets:10,equipTickets:10,firstTen:false,stats:{sales:0,estimate:0,design:0,site:0,manage:0},quests:[],owned:{},ownedEquip:{},equipLevel:{},party:[],equipped:{weapon:null,armor:null,accessory:null},bossKills:{},projects:[],facilities:{酒場:1,鍛冶屋:1,訓練所:1,ギルド:1,図書館:1}});
+let data=JSON.parse(localStorage.getItem("questDataV8")||localStorage.getItem("questDataV6")||localStorage.getItem("questDataV5")||"null")||defaultData();
+data={...defaultData(),...data};data.stats={...defaultData().stats,...(data.stats||{})};data.facilities={...defaultData().facilities,...(data.facilities||{})};
+let currentUser=null,remoteRef=null,remoteReady=false,saving=false;
+const el=id=>document.getElementById(id), tabBtns=()=>document.querySelectorAll(".tabs button");
+
+data.daily=data.daily||{lastClaim:"",streak:0};
+let editingQuestId=null;
+function todayKey(){return new Date().toISOString().slice(0,10)}
+function parseQuickDate(text){
+ let d=new Date();
+ if(text.includes("明後日"))d.setDate(d.getDate()+2);
+ else if(text.includes("明日"))d.setDate(d.getDate()+1);
+ else if(text.includes("今日")){}
+ else return "";
+ return d.toISOString().slice(0,10);
+}
+function parseStars(text){const m=text.match(/★+/);return m?Math.min(5,m[0].length):3}
+function inferCategory(text){
+ if(text.includes("見積"))return"見積";
+ if(text.includes("メール")||text.includes("返信"))return"メール";
+ if(text.includes("図面")||text.includes("デザイン"))return"デザイン";
+ if(text.includes("現場")||text.includes("施工")||text.includes("協力会社"))return"現場";
+ if(text.includes("打合")||text.includes("会議")||text.includes("クライアント"))return"打合せ";
+ return"その他";
+}
+function quickAdd(){
+ const text=el("quickInput").value.trim();
+ if(!text)return alert("クエストを入力してください");
+ data.quests.push({id:Date.now(),title:text.replace(/★+/g,"").trim(),memo:"クイック追加",date:parseQuickDate(text)||todayKey(),category:inferCategory(text),priority:parseStars(text),projectId:"",done:false});
+ el("quickInput").value="";
+ data.exp+=3+v10Bonus().quick;
+ save();render();
+}
+function templateQuest(title,category,priority){
+ data.quests.push({id:Date.now(),title,memo:"テンプレート追加",date:todayKey(),category,priority,projectId:"",done:false});
+ save();render();
+}
+function claimLoginBonus(){
+ const today=todayKey();
+ if(data.daily.lastClaim===today)return alert("今日は受取済みです");
+ const y=new Date();y.setDate(y.getDate()-1);const ykey=y.toISOString().slice(0,10);
+ data.daily.streak=(data.daily.lastClaim===ykey)?data.daily.streak+1:1;
+ data.daily.lastClaim=today;
+ const reward=1+Math.floor(data.daily.streak/3);
+ data.tickets+=reward;data.equipTickets+=reward;
+ if(data.daily.streak%7===0){data.tickets+=5;data.equipTickets+=5}
+ save();render();alert(`ログインボーナス！ チケット各 +${reward}`);
+}
+function openEditQuest(id){
+ const q=data.quests.find(x=>x.id===id);if(!q)return;
+ editingQuestId=id;
+ el("editTitle").value=q.title;el("editMemo").value=q.memo||"";el("editDate").value=q.date||"";
+ el("editCategory").value=q.category;el("editPriority").value=q.priority;
+ el("editProject").innerHTML='<option value="">案件なし</option>'+data.projects.filter(p=>!p.done).map(p=>`<option value="${p.id}">${p.name}</option>`).join("");
+ el("editProject").value=q.projectId||"";
+ el("editModal").classList.add("show");
+}
+function saveEditQuest(){
+ const q=data.quests.find(x=>x.id===editingQuestId);if(!q)return;
+ q.title=el("editTitle").value.trim();q.memo=el("editMemo").value;q.date=el("editDate").value;q.category=el("editCategory").value;q.priority=Number(el("editPriority").value);q.projectId=el("editProject").value;
+ closeEdit();save();render();
+}
+function closeEdit(){el("editModal").classList.remove("show");editingQuestId=null}
+function exportBackup,learnSkill,openTreasure,dailyDungeonFight(){
+ const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+ const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="quest-task-backup.json";a.click();
+}
+function dailyProgress(){
+ const doneToday=data.quests.filter(q=>q.done&&q.completedDate===todayKey()).length;
+ return [
+  {name:"今日クエスト3件達成",now:doneToday,max:3,reward:"券+1"},
+  {name:"重要クエスト1件達成",now:data.quests.filter(q=>q.done&&q.completedDate===todayKey()&&q.priority>=4).length,max:1,reward:"装備券+1"}
+ ];
+}
+
+
+// v10 game boost
+data.v10=data.v10||{job:"営業勇者",stamina:100,lastStaminaDate:"",combo:0,lastCompleteDate:"",skillPoints:0,skills:{},treasure:0,dailyDungeonDate:"",dailyDungeonCount:0};
+const skills=[
+ {id:"quickMaster",name:"高速入力",desc:"クイック追加EXP +5",cost:1},
+ {id:"rewardUp",name:"報酬アップ",desc:"クエスト達成チケット +1",cost:2},
+ {id:"raidBreaker",name:"案件ブレイク",desc:"案件レイドダメージ +30%",cost:2},
+ {id:"bossSlayer",name:"ボスキラー",desc:"ボス戦闘力 +20%",cost:3},
+ {id:"goldAura",name:"営業オーラ",desc:"Gold獲得 +30%",cost:2},
+ {id:"treasureEye",name:"宝箱の目利き",desc:"宝箱報酬が良くなる",cost:2}
+];
+function refreshStamina(){
+ const t=todayKey();
+ if(data.v10.lastStaminaDate!==t){data.v10.stamina=100;data.v10.lastStaminaDate=t;data.v10.dailyDungeonCount=0;data.v10.dailyDungeonDate=t;}
+}
+function spendStamina(n){refreshStamina();if(data.v10.stamina<n){alert("スタミナ不足");return false}data.v10.stamina-=n;return true}
+function learnSkill(id){
+ const s=skills.find(x=>x.id===id); if(!s)return;
+ if(data.v10.skills[id])return alert("習得済み");
+ if(data.v10.skillPoints<s.cost)return alert("スキルポイント不足");
+ data.v10.skillPoints-=s.cost; data.v10.skills[id]=true; save();render();
+}
+function v10Bonus(){
+ return {
+  quick:data.v10.skills.quickMaster?5:0,
+  ticket:data.v10.skills.rewardUp?1:0,
+  raid:data.v10.skills.raidBreaker?1.3:1,
+  boss:data.v10.skills.bossSlayer?1.2:1,
+  gold:data.v10.skills.goldAura?1.3:1,
+  treasure:data.v10.skills.treasureEye?1.5:1
+ };
+}
+function openTreasure(){
+ if((data.v10.treasure||0)<=0)return alert("宝箱がありません");
+ data.v10.treasure--;
+ const b=v10Bonus().treasure;
+ const r=Math.random();
+ if(r<0.45){let g=Math.floor(300*b);data.gold+=g;alert(`宝箱から ${g} Gold！`)}
+ else if(r<0.75){let n=Math.ceil(2*b);data.tickets+=n;alert(`宝箱から キャラ券 +${n}！`)}
+ else if(r<0.95){let n=Math.ceil(2*b);data.equipTickets+=n;alert(`宝箱から 装備券 +${n}！`)}
+ else{data.tickets+=10;data.equipTickets+=10;alert("大当たり！ チケット各 +10！")}
+ save();render();
+}
+async function dailyDungeonFight(){
+ refreshStamina();
+ if(data.v10.dailyDungeonCount>=3)return alert("今日の挑戦回数は終了");
+ if(!spendStamina(20))return;
+ data.v10.dailyDungeonCount++;
+ const need=150+data.v10.dailyDungeonCount*120;
+ const p=Math.floor(power()*v10Bonus().boss);
+ const win=p>=need || Math.random()*100<Math.min(90,40+(p-need)/10);
+ await battleMovie(`デイリー魔物 Lv.${data.v10.dailyDungeonCount}`,Math.max(50,p),win);
+ if(win){data.v10.treasure+=1;data.tickets+=1;data.equipTickets+=1;data.exp+=30;alert("デイリーダンジョン勝利！宝箱+1")}
+ else alert("敗北…明日また挑もう");
+ save();render();
+}
+function partyTalkText(){
+ const talks=[
+  "見積術士「今日の見積、早めに片付けましょう」",
+  "施工戦士「現場タスクは放置すると強敵になります」",
+  "営業騎士「まずは3秒でクエスト登録です」",
+  "資料僧侶「期限切れを回復しましょう」",
+  "代理店勇者「案件レイド、あと少しです！」"
+ ];
+ return talks[(new Date().getDate()+data.level)%talks.length];
+}
+
+function save(){localStorage.setItem("questDataV8",JSON.stringify(data));if(currentUser&&remoteRef&&remoteReady){saving=true;set(remoteRef,data).then(()=>{saving=false;el("syncStatus").textContent="☁ 同期済み"})}else if(el("syncStatus"))el("syncStatus").textContent="この端末に保存しました。ログインすると同期できます。"}
+async function loginGoogle(){try{await signInWithPopup(auth,provider)}catch(e){alert("ログイン失敗\\n"+e.message)}}
+async function logoutGoogle(){await signOut(auth)}
+onAuthStateChanged(auth,async user=>{currentUser=user;remoteReady=false;if(!user){remoteRef=null;el("userInfo").textContent="未ログイン";render();return}el("userInfo").textContent=user.displayName||user.email;remoteRef=ref(db,`users/${user.uid}/questDataV8`);let s=await get(remoteRef);if(s.exists()){data={...defaultData(),...s.val()};localStorage.setItem("questDataV8",JSON.stringify(data));el("syncStatus").textContent="☁ クラウド読込"}else{await set(remoteRef,data);el("syncStatus").textContent="☁ 初回保存"}remoteReady=true;onValue(remoteRef,s=>{if(!s.exists()||saving)return;data={...defaultData(),...s.val()};localStorage.setItem("questDataV8",JSON.stringify(data));render()});render()});
+function showPage(id,btn){document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));el(id).classList.add("active");tabBtns().forEach(b=>b.classList.remove("active"));btn.classList.add("active");render()}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+function movie(icon,title,sub="",rainbow=false){el("movieIcon").textContent=icon;el("movieTitle").innerHTML=rainbow?`<span class="rainbow">${title}</span>`:title;el("movieSub").textContent=sub;el("movie").classList.add("show")}
+function movieHide(){el("movie").classList.remove("show")}
+function bestRare(items){let order=["N","R","SR","SSR","UR","LR","SECRET"];return items.reduce((a,x)=>order.indexOf(x.rare)>order.indexOf(a)?x.rare:a,"N")}
+async function gachaMovie(rare,trial){movie("🚪",trial?"お試し募集":"冒険者募集","旅人がこちらを見ている…");await sleep(600);let map={N:["🔵","青い扉"],R:["🟢","緑の光"],SR:["🟣","紫の気配"],SSR:["⚡","金色の稲妻"],UR:["🌈","虹の扉"],LR:["🌠","伝説のカットイン"],SECRET:["🌌","世界の均衡が崩れる…"]};movie(map[rare][0],map[rare][1],"結果発表",["UR","LR","SECRET"].includes(rare));await sleep(900);movieHide()}
+async function battleMovie(boss,damage,win){movie("👹",`${boss} が あらわれた！`,"コマンド？　たたかう");await sleep(700);movie("⚔️","パーティーのこうげき！","スキル発動");await sleep(650);movie("💥",`<span class="damage">${damage} ダメージ!</span>`,"");await sleep(750);movie(win?"🏆":"💀",win?`${boss} を たおした！`:"ぜんめつした…",win?"報酬を獲得！":"装備を強化しよう",win);await sleep(950);movieHide()}
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+function drawChar(commit=true){let r=drawRarity(),c=pick(C.filter(x=>x.rare===r));if(commit)data.owned[c.id]=(data.owned[c.id]||0)+1;return c}
+function drawEquip(commit=true){let r=drawRarity(),e=pick(E.filter(x=>x.rare===r));if(commit)data.ownedEquip[e.id]=(data.ownedEquip[e.id]||0)+1;return e}
+function charCard(c,click=false){return `<div class="char ${c.rare} ${data.party.includes(c.id)?"equipped":""}" ${click?`onclick="toggleParty(${c.id})"`:""}><div class="face">${c.face}</div><div class="name">${c.name}</div><div>${c.rare}/${c.role}</div><div class="small">ATK ${c.atk} DEF ${c.def}</div></div>`}
+function equipCard(e,click=false){let lv=data.equipLevel[e.id]||0;let equipped=Object.values(data.equipped).includes(e.id);return `<div class="equip ${e.rare} ${equipped?"equipped":""}" ${click?`onclick="equipItem(${e.id})"`:""}><div class="face">${e.face}</div><div class="name">${e.name}+${lv}</div><div>${e.rare}/${e.type}/${e.set}</div><div class="small">ATK ${e.atk+lv*10} DEF ${e.def+lv*10} BONUS ${e.bonus+lv*5}</div><button onclick="event.stopPropagation();enhanceEquip(${e.id})">強化</button></div>`}
+function showResult(title,items,type){el("modalTitle").textContent=title;el("resultGrid").innerHTML=items.map(x=>type==="char"?charCard(x):equipCard(x)).join("");el("modal").classList.add("show")}
+function closeModal(){el("modal").classList.remove("show");render()}
+async function charGacha(n,trial){if(!trial&&data.tickets<n){alert("キャラ券不足");return}if(!trial)data.tickets-=n;let res=Array.from({length:n},()=>drawChar(!trial));await gachaMovie(bestRare(res),trial);if(!trial)save();showResult(trial?"お試し冒険者募集":"冒険者募集",res,"char")}
+async function equipGacha(n,trial){if(!trial&&data.equipTickets<n){alert("装備券不足");return}if(!trial)data.equipTickets-=n;let res=Array.from({length:n},()=>drawEquip(!trial));await gachaMovie(bestRare(res),trial);if(!trial)save();showResult(trial?"お試し装備":"装備ガチャ",res,"equip")}
+function firstTen(){if(data.firstTen){alert("初回10連は使用済み");return}data.firstTen=true;charGacha(10,false)}
+function addQuest(){let title=el("title").value.trim();if(!title)return alert("クエスト名を入力");let q={id:Date.now(),title,memo:el("memo").value,date:el("date").value,category:el("category").value,priority:+el("priority").value,projectId:el("projectSelect").value,done:false};data.quests.push(q);el("title").value="";el("memo").value="";save();render()}
+function completeQuest(id){let q=data.quests.find(x=>x.id===id);if(!q||q.done)return;q.done=true;q.completedDate=todayKey();refreshStamina();data.v10.combo=(data.v10.lastCompleteDate===todayKey()?data.v10.combo+1:1);data.v10.lastCompleteDate=todayKey();if(data.v10.combo%5===0){data.v10.skillPoints++;data.v10.treasure++;alert('5コンボ！スキルポイント+1 / 宝箱+1')}let gain=25+q.priority*18, dmg=gain*10, bonus=bonusRates();data.exp+=Math.floor(gain*bonus.exp);data.gold+=Math.floor(q.priority*80*bonus.gold*v10Bonus().gold);data.companyGold+=q.priority*40;data.tickets+=Math.ceil(Math.max(1,Math.floor(q.priority/2))*bonus.ticket)+v10Bonus().ticket;data.equipTickets+=q.priority>=4?1:0;while(data.exp>=100){data.exp-=100;data.level++}if(q.category==="見積")data.stats.estimate++;if(q.category==="メール")data.stats.manage++;if(q.category==="デザイン")data.stats.design++;if(q.category==="現場")data.stats.site++;if(q.category==="打合せ")data.stats.sales++;if(q.projectId){let p=data.projects.find(x=>x.id==q.projectId);if(p){dmg=Math.floor(dmg*v10Bonus().raid);p.hp=Math.max(0,p.hp-dmg);if(p.hp===0&&!p.done){p.done=true;data.tickets+=10;data.equipTickets+=10;alert("案件レイド撃破！報酬獲得")}}}save();render()}
+function deleteQuest(id){if(confirm("削除？")){data.quests=data.quests.filter(q=>q.id!==id);save();render()}}
+function quickToday(){el("date").value=new Date().toISOString().slice(0,10)}
+function quickTomorrow(){let d=new Date();d.setDate(d.getDate()+1);el("date").value=d.toISOString().slice(0,10)}
+function voiceInput(){let SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return alert("スマホは入力欄→🎤が安定");let r=new SR();r.lang="ja-JP";r.start();r.onresult=e=>el("title").value=e.results[0][0].transcript}
+function isToday(d){return d&&new Date().toDateString()===new Date(d).toDateString()}function isOverdue(d){if(!d)return false;let t=new Date();t.setHours(0,0,0,0);return new Date(d)<t}
+function questHTML(q){let p=data.projects.find(x=>x.id==q.projectId);return `<div class="quest"><h3 class="${q.done?"done":""}">${q.title}</h3><p>${"★".repeat(q.priority)} / ${q.category} / ${q.date||"未設定"} ${p?"/ "+p.name:""}</p>${isOverdue(q.date)&&!q.done?'<p class="warn">⚠期限切れ</p>':isToday(q.date)&&!q.done?'<p class="today">🔥今日</p>':""}<p>${q.memo||""}</p>${q.done?"":`<button onclick="completeQuest(${q.id})">達成</button>`}<button class="blue" onclick="openEditQuest(${q.id})">編集</button><button class="red" onclick="deleteQuest(${q.id})">削除</button></div>`}
+function toggleParty(id){if(data.party.includes(id))data.party=data.party.filter(x=>x!==id);else{if(data.party.length>=4)return alert("仲間は4人まで");data.party.push(id)}save();render()}
+function equipItem(id){let e=E.find(x=>x.id==id);data.equipped[e.type]=id;save();render()}
+function enhanceEquip(id){if((data.ownedEquip[id]||0)<3)return alert("同じ装備が3個必要");let lv=data.equipLevel[id]||0;if(lv>=10)return alert("最大強化済み");data.ownedEquip[id]-=3;data.equipLevel[id]=lv+1;save();render()}
+function equippedItems(){return Object.values(data.equipped).map(id=>E.find(e=>e.id==id)).filter(Boolean)}
+function bonusRates(){let eq=equippedItems(), sets={};eq.forEach(e=>sets[e.set]=(sets[e.set]||0)+1);return{exp:1+(sets["展示会"]>=3?.3:0),gold:1+(sets["営業"]>=3?.5:0),ticket:1+(sets["見積"]>=3?.3:0),atk:1+(sets["施工"]>=3?.2:0)}}
+function power(){let p=data.level*5;data.party.forEach(id=>{let c=C.find(x=>x.id==id);if(c)p+=c.atk+c.def+c.heal+c.buff});equippedItems().forEach(e=>{let lv=data.equipLevel[e.id]||0;p+=e.atk+e.def+e.bonus+lv*20});return Math.floor(p*bonusRates().atk)}
+function bosses(){return Array.from({length:200},(_,i)=>{let f=i+1;return{floor:f,area:world[Math.min(world.length-1,Math.floor(i/30))],name:`${f}F ${bossBase[i%bossBase.length]}`,need:100+f*45,reward:Math.ceil(f/10)}})}
+async function fightBoss(f){if(!spendStamina(10))return;let b=bosses()[f-1],p=Math.floor(power()*v10Bonus().boss),rate=Math.min(95,Math.max(5,50+(p-b.need)/10)),dmg=Math.floor(p*(.8+Math.random()*.6)),win=Math.random()*100<rate;await battleMovie(b.name,dmg,win);if(win){data.bossKills[f]=(data.bossKills[f]||0)+1;data.exp+=20+f*3;data.gold+=100+f*20;data.companyGold+=f*10;data.tickets+=b.reward;data.equipTickets+=b.reward}save();render()}
+function addProject(){let name=el("projectName").value.trim();if(!name)return;let hp=+el("projectHp").value||50000;data.projects.push({id:Date.now(),name,maxHp:hp,hp,done:false});save();render()}
+function deleteProject(id){if(confirm("案件削除？")){data.projects=data.projects.filter(p=>p.id!==id);save();render()}}
+function upgradeFacility(n){let lv=data.facilities[n]||1,cost=lv*1000;if(data.companyGold<cost)return alert("会社資金不足");data.companyGold-=cost;data.facilities[n]=lv+1;save();render()}
+function newGame(){if(confirm("全部リセット？")){data=defaultData();save();render()}}
+function rank(){return rankNames[Math.min(rankNames.length-1,Math.floor(data.level/10))]}
+function render(){
+refreshStamina();
+if(el("stamina"))el("stamina").textContent=data.v10.stamina;
+if(el("combo"))el("combo").textContent=data.v10.combo||0;
+if(el("jobName"))el("jobName").textContent=data.v10.job;
+if(el("skillPoints"))el("skillPoints").textContent=data.v10.skillPoints||0;
+if(el("partyTalk"))el("partyTalk").textContent=partyTalkText();
+if(el("skillTree"))el("skillTree").innerHTML=skills.map(s=>`<div class="skillCard ${data.v10.skills[s.id]?'skillOn':''}"><h3>${data.v10.skills[s.id]?'✅ ':''}${s.name}</h3><p>${s.desc}</p><p>必要SP ${s.cost}</p><button onclick="learnSkill('${s.id}')">習得</button></div>`).join("");
+if(el("dailyDungeon"))el("dailyDungeon").innerHTML=`<p>本日挑戦 ${data.v10.dailyDungeonCount||0}/3　宝箱 ${data.v10.treasure||0}個</p><button class="purple" onclick="dailyDungeonFight()">挑戦する</button><button onclick="openTreasure()">宝箱を開ける</button>`;
+if(el("v10Achievements"))el("v10Achievements").innerHTML=`<p>5コンボ達成でSPと宝箱獲得</p><p>現在コンボ：${data.v10.combo||0}</p><p>宝箱：${data.v10.treasure||0}</p>`;
+
+el("rank").textContent=rank();el("level").textContent=data.level;el("exp").textContent=data.exp;el("expbar").style.width=data.exp+"%";el("gold").textContent=data.gold;el("companyGold").textContent=data.companyGold;el("tickets").textContent=data.tickets;el("tickets2").textContent=data.tickets;el("equipTickets").textContent=data.equipTickets;el("equipTickets2").textContent=data.equipTickets;el("power").textContent=power();["sales","estimate","design","site","manage"].forEach(k=>el(k).textContent=data.stats[k]);let rem=data.quests.filter(q=>!q.done).length;el("guild").textContent=rem?`未達成クエストが${rem}件あります。`:"全クエスト達成！";
+let todayList=data.quests.filter(q=>!q.done&&(isToday(q.date)||isOverdue(q.date)||q.priority>=4));
+if(el("todayBrief"))el("todayBrief").innerHTML="<h3>今日見るべきクエスト</h3>"+(todayList.slice(0,5).map(q=>`<div class="dailyItem">${q.priority>=4?"🔥":""}${q.title} / ${q.category} / ${q.date||"未設定"}</div>`).join("")||"<p>今すぐ見るべきクエストはありません。</p>");
+if(el("dailyMissions"))el("dailyMissions").innerHTML=`<p>連続ログイン：${data.daily.streak||0}日</p>`+dailyProgress().map(m=>`<div class="dailyItem">${m.name}<br>${Math.min(m.now,m.max)}/${m.max}　報酬：${m.reward}</div>`).join("");
+el("partyView").innerHTML=(data.party.length?data.party.map(id=>charCard(C.find(c=>c.id==id))).join(""):"仲間なし");el("urgent").innerHTML=data.quests.filter(q=>!q.done&&(isToday(q.date)||isOverdue(q.date))).map(questHTML).join("")||"なし";let search=(el("searchText")?.value||"").toLowerCase(), mode=el("filterMode")?.value||"all", fcat=el("filterCategory")?.value||"";
+let activeList=data.quests.filter(q=>!q.done)
+.filter(q=>!search||(q.title+(q.memo||"")).toLowerCase().includes(search))
+.filter(q=>!fcat||q.category===fcat)
+.filter(q=>mode==="all"||(mode==="today"&&isToday(q.date))||(mode==="overdue"&&isOverdue(q.date))||(mode==="high"&&q.priority>=3));
+el("active").innerHTML=activeList.map(questHTML).join("")||"なし";el("done").innerHTML=data.quests.filter(q=>q.done).map(questHTML).join("")||"なし";el("ownedChars").innerHTML=C.filter(c=>data.owned[c.id]).map(c=>charCard(c,true)).join("")||"未所持";el("ownedEquips").innerHTML=E.filter(e=>data.ownedEquip[e.id]>0).map(e=>equipCard(e,true)).join("")||"未所持";el("ownedCount").textContent=Object.keys(data.owned).length;el("ownedEquipCount").textContent=Object.keys(data.ownedEquip).length;el("collection").innerHTML=C.map(c=>`<div class="char ${c.rare} ${data.owned[c.id]?"":"locked"}"><div class="face">${data.owned[c.id]?c.face:"❔"}</div><div class="name">${data.owned[c.id]?c.name:"未発見"}</div><div>${c.rare}</div></div>`).join("");el("worldMap").innerHTML=world.map((w,i)=>`<div class="card">🌎 ${w} ${i*30+1}F〜</div>`).join("");el("bossList").innerHTML=bosses().slice(0,60).map(b=>`<div class="boss"><h3>${b.area} / ${b.name}</h3><p>推奨 ${b.need} / 討伐 ${data.bossKills[b.floor]||0}回</p><div class="bar"><div class="hpfill" style="width:${Math.min(100,power()/b.need*100)}%"></div></div><button onclick="fightBoss(${b.floor})">たたかう</button></div>`).join("");el("projects").innerHTML=data.projects.map(p=>`<div class="project"><h3>${p.done?"✅ ":""}${p.name}</h3><p>HP ${p.hp}/${p.maxHp}</p><div class="bar"><div class="hpfill" style="width:${p.hp/p.maxHp*100}%"></div></div><button class="red" onclick="deleteProject(${p.id})">削除</button></div>`).join("")||"案件なし";el("projectSelect").innerHTML='<option value="">案件なし</option>'+data.projects.filter(p=>!p.done).map(p=>`<option value="${p.id}">${p.name}</option>`).join("");el("facilities").innerHTML=Object.keys(data.facilities).map(n=>`<div class="facility"><h3>${n} Lv.${data.facilities[n]}</h3><p>強化費 ${data.facilities[n]*1000}G</p><button onclick="upgradeFacility('${n}')">強化</button></div>`).join("");el("achievements").innerHTML=`<p>称号：${data.level>=80?"王国英雄":data.level>=50?"展示会覇者":data.level>=30?"見積マスター":data.level>=10?"営業騎士":"新人営業"}</p><p>完了クエスト ${data.quests.filter(q=>q.done).length}件 / ボス討伐 ${Object.values(data.bossKills).reduce((a,b)=>a+b,0)}回</p>`}
+Object.assign(window,{loginGoogle,logoutGoogle,showPage,charGacha,equipGacha,firstTen,closeModal,addQuest,completeQuest,deleteQuest,quickToday,quickTomorrow,voiceInput,toggleParty,equipItem,enhanceEquip,fightBoss,addProject,deleteProject,upgradeFacility,newGame,tabBtns,quickAdd,templateQuest,claimLoginBonus,openEditQuest,saveEditQuest,closeEdit,exportBackup,learnSkill,openTreasure,dailyDungeonFight});
+render();
+</script>
+</body>
+</html>
